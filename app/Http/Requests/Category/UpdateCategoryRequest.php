@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Category;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
-class LoginRequest extends FormRequest
+class UpdateCategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,11 +22,9 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email',
-            'password' => [
-                'required',
-                Password::min(8)->mixedCase()->letters()->numbers()
-            ]
+            'title' => 'string|required|sometimes',
+            'slug' => 'string|unique:categories,slug|sometimes',
+            'id_sub_category' => 'numeric|nullable|sometimes'
         ];
     }
 }

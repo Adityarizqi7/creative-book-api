@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\api\auth;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\LoginRequest;
-use App\Http\Requests\UserRequest;
 use App\Models\User;
-use App\service\AuthenticationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use App\service\AuthenticationService;
+use App\Http\Requests\User\UserRequest;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\Authentication\LoginRequest;
 
 
 class AuthController extends Controller
@@ -26,7 +26,6 @@ class AuthController extends Controller
     public function register(UserRequest $user_request) {
 
         try {
-
             $user = DB::transaction( function () use ($user_request) {
                 $validatedData = $user_request->validated();
                 return $this->authenticaton_service->register($validatedData);
@@ -36,7 +35,7 @@ class AuthController extends Controller
                 'code' => 201,
                 'status' => 'success',
                 'message' => 'Pendaftaran Pengguna Berhasil.',
-                'data' => $user,
+                'data' => $user->only(['uuid', 'email', 'name']),
             ], 201);
 
         } catch (\Throwable $e) {
@@ -45,8 +44,8 @@ class AuthController extends Controller
             return response()->json([
                 'code' => 500,
                 'status' => 'error',
-                'message' => 'Pendaftaran Pengguna Gagal.',
-            ]);
+                'message' => 'Pendaftaran Pengguna Gagal. ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -74,7 +73,7 @@ class AuthController extends Controller
                 'status' => 'success',
                 'message' => 'Proses Masuk Berhasil',
                 'data' => [
-                    'user' => $result['user'],
+                    'user' => $result['user']->only(['uuid', 'email', 'name']),
                     'token' => $result['token']
                 ]
             ], 200);
@@ -104,8 +103,10 @@ class AuthController extends Controller
             Log::error('Gagal keluar aplikasi', ['exception' => $e->getMessage()]);
 
             return response()->json([
+                'code' => 500,
+                'status' => 'error',
                 'message' => 'Gagal keluar aplikasi'
-            ]);
+            ], 500);
         }
     }
 }
