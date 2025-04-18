@@ -30,4 +30,17 @@ class LoginRequest extends FormRequest
             ]
         ];
     }
+
+    public function messages() {
+        return [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal terdiri dari 8 karakter.',
+            'password.mixedCase' => 'Password harus mengandung 1 huruf besar dan kecil.',
+            'password.letters' => 'Password harus mengandung huruf.',
+            'password.numbers' => 'Password harus mengandung 1 angka.',
+        ];
+    }
 }

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->bigInteger('discount');
             $table->string('name');
             $table->string('slug')->unique();
+            $table->timestamp('start_date_flash_sale');
+            $table->timestamp('end_date_flash_sale');
             $table->timestamps();
 
             $table->uuid('uuid_store')->nullable();

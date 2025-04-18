@@ -24,7 +24,18 @@ class UpdateCategoryRequest extends FormRequest
         return [
             'title' => 'string|required|sometimes',
             'slug' => 'string|unique:categories,slug|sometimes',
-            'id_sub_category' => 'numeric|nullable|sometimes'
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'Judul Kategori wajib diisi.',
+            'title.string' => 'Judul Kategori harus berupa teks.',
+        
+            'slug.string' => 'Slug harus berupa teks.',
+            'slug.unique' => 'Slug sudah digunakan, silakan pilih yang lain.',
+        ];
+        
     }
 }

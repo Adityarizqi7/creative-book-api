@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('stores', function (Blueprint $table) {
             $table->uuid('uuid')->primary();
-            $table->unsignedBigInteger('id')->unique()->default(0);
+            $table->unsignedBigInteger('id')->unique()->default(1);
             $table->string('name');
+            $table->string('city_name');
+            $table->string('address')->nullable();
             $table->string('slug')->unique();
             $table->timestamps();
-
-            $table->uuid('uuid_city');
-            $table->foreign('uuid_city')->references('uuid')->on('cities');
         });
     }
 

@@ -24,7 +24,18 @@ class CreateCategoryRequest extends FormRequest
         return [
             'title' => 'string|required',
             'slug' => 'string|unique:categories,slug',
-            'id_sub_category' => 'numeric|nullable'
         ];
+    }  
+
+    public function messages(): array
+    {
+        return [
+            'title.required' => 'Judul Kategori wajib diisi.',
+            'title.string' => 'Judul Kategori harus berupa teks.',
+        
+            'slug.string' => 'Slug harus berupa teks.',
+            'slug.unique' => 'Slug sudah digunakan, silakan pilih yang lain.',
+        ];
+        
     }
 }

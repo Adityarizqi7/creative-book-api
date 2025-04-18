@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
-use App\service\CategoryService;
+use App\Http\Models\Category;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Service\CategoryService;
 use App\Http\Requests\Category\CreateCategoryRequest;
 use App\Http\Requests\Category\UpdateCategoryRequest;
-use Illuminate\Http\Client\Request;
 
 class CategoryController extends Controller
 {
@@ -32,12 +31,13 @@ class CategoryController extends Controller
                 'message' => 'Kategori berhasil didapatkan.',
                 'data' => $categories,
             ], 200);
+            
         } catch (\Throwable $e) {
             Log::error('Gagal mengambil data Kategori Buku', ['exception' => $e->getMessage()]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal mengambil data Kategori Buku'
+                'message' => 'Gagal mengambil data Kategori Buku.'
             ]);
         }
     }
@@ -53,23 +53,35 @@ class CategoryController extends Controller
             return response()->json([
                 'code' => 201,
                 'status' => 'success',
-                'message' => 'Kategori berhasil di ditambahkan.',
-                'data' => $category->only(['uuid', 'title', 'slug', 'created_at']),
+                'message' => 'Kategori berhasil ditambahkan.',
+                'data' => $category->only(['uuid', 'title', 'slug', 'updated_at']),
             ], 201);
 
         } catch (\Throwable $e) {
-            Log::error('Gagal menambah data Kategori Buku', ['exception' => $e->getMessage()]);
+            Log::error('Gagal menambah data Kategori Buku.', ['exception' => $e->getMessage()]);
 
             return response()->json([
                 'code' => 500,
                 'status' => 'error',
-                'message' => 'Gagal menambah data Kategori Buku'
+                'message' => 'Gagal menambah data Kategori Buku.'
             ], 500);
         }
     }
 
-    public function updateCategory(UpdateCategoryRequest $request) {
+    public function updateCategory(UpdateCategoryRequest $request, $uuid) {
         try {
+
+            $category = new Category();
+            $category_data = $category->getCategoryByUuid($uuid);
+
+            if (!$category_data) {
+                return response()->json([
+                    'code' => 400,
+                    'status' => 'error',
+                    'message' => 'Kategori Buku tidak ditemukan.'
+                ], 400);
+            }
+
             $category = DB::transaction(function () use ($request) {
                 $uuid = $request->route('uuid');
                 $validatedData = $request->validated();
@@ -80,21 +92,33 @@ class CategoryController extends Controller
                 'code' => 201,
                 'status' => 'success',
                 'message' => 'Kategori berhasil di diubah.',
-                'data' => $category->only(['uuid', 'title', 'slug', 'created_at']),
+                'data' => $category->only(['uuid', 'title', 'slug', 'updated_at']),
             ], 201);
         } catch (\Throwable $e) {
-            Log::error('Gagal mengubah data Kategori Buku', ['exception' => $e->getMessage()]);
+            Log::error('Gagal mengubah data Kategori Buku.', ['exception' => $e->getMessage()]);
 
             return response()->json([
                 'code' => 500,
                 'status' => 'error',
-                'message' => 'Gagal mengubah data Kategori Buku'
+                'message' => 'Gagal mengubah data Kategori Buku.'
             ], 500);
         }
     }
 
     public function deleteCategory($uuid) {
         try {
+
+            $category = new Category();
+            $category_data = $category->getCategoryByUuid($uuid);
+
+            if (!$category_data) {
+                return response()->json([
+                    'code' => 404,
+                    'status' => 'error',
+                    'message' => 'Kategori Buku tidak ditemukan.'
+                ], 404);
+            }
+            
             DB::transaction(function () use ($uuid) {
                 return $this->category_service->delete($uuid);
             });
@@ -105,12 +129,12 @@ class CategoryController extends Controller
                 'message' => 'Kategori berhasil di dihapus.',
             ], 201);
         } catch (\Throwable $e) {
-            Log::error('Gagal menghapus data Kategori Buku', ['exception' => $e->getMessage()]);
+            Log::error('Gagal menghapus data Kategori Buku.', ['exception' => $e->getMessage()]);
 
             return response()->json([
                 'code' => 500,
                 'status' => 'error',
-                'message' => 'Gagal menghapus data Kategori Buku ' . $e->getMessage()
+                'message' => 'Gagal menghapus data Kategori Buku.'
             ], 500);
         }
     }

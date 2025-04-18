@@ -18,8 +18,10 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->timestamps();
 
-            $table->uuid('uuid_category');
+            $table->uuid('uuid_category')->nullable();
             $table->foreign('uuid_category')->references('uuid')->on('categories');
+            $table->uuid('uuid_parent_sub_category')->nullable();
+            $table->foreign('uuid_parent_sub_category')->references('uuid')->on('sub_categories');
         });
     }
 
