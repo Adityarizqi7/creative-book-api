@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Models\Role;
 use App\Http\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -137,5 +138,15 @@ class UserController extends Controller
                 'message' => 'Gagal menghapus data Pengguna.'
             ], 500);
         }
+    }
+
+    public function getAllRoles() {
+        $roles = Role::all();
+        return response()->json([
+            'code' => 200,
+            'status' => 'success',
+            'message' => 'Akun Pengguna berhasil diubah.',
+            'data' => $roles
+        ], 200);
     }
 }

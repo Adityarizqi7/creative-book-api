@@ -25,12 +25,7 @@ class UpdateBookRequest extends FormRequest
             'name' => 'string|required|sometimes',
             'description' => 'string|nullable|sometimes',
             'slug' => 'string|unique:books,slug',
-            'image' => [
-                'nullable',
-                'string',
-                'sometimes',
-                'regex:/^data:image\/(jpg|jpeg|png);base64,/',
-            ],
+            'images' => 'mimes:png,jpg,jpeg|max:1536|image|sometimes',
             'variant_code' => 'string|required|sometimes',
             'variant_name' => 'string|required|sometimes',
             'date_publish' => 'date|nullable|sometimes',
@@ -60,9 +55,9 @@ class UpdateBookRequest extends FormRequest
             'slug.string' => 'Slug harus berupa teks.',
             'slug.unique' => 'Slug sudah digunakan, silakan pilih yang lain.',
 
-            'image.image' => 'Avatar harus berupa gambar.',
-            'image.mimes' => 'Avatar harus memiliki format jpg, jpeg, atau png.',
-            'image.max' => 'Ukuran avatar maksimal 1.5MB.',
+            'images.image' => 'Cover Buku harus berupa gambar.',
+            'images.mimes' => 'Cover Buku harus memiliki format jpg, jpeg, atau png.',
+            'images.max' => 'Ukuran avatar maksimal 1.5MB.',
 
             'variant_code.required' => 'Kode Varian wajib diisi.',
             'variant_code.string' => 'Kode Varian harus berupa teks.',

@@ -32,11 +32,13 @@ class CreatePromoRequest extends FormRequest
             ],
             'start_date_flash_sale' => [
                 'date_format:Y-m-d H:i:s',
-                'required'
+                'required',
+                'after:now'
             ],
             'end_date_flash_sale' => [
                 'date_format:Y-m-d H:i:s',
-                'required'
+                'required',
+                'after:start_date_flash_sale'
             ],
             'slug' => 'string|unique:promos,slug',
         ];

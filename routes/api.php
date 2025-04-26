@@ -13,9 +13,11 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\WriterController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProvinceController;
 use App\Http\Controllers\PublisherController;
 use App\Http\Controllers\SubCategoryController;
+use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Middleware\CheckTokenExpiry;
 
@@ -28,6 +30,8 @@ Route::get('/provinces', [ProvinceController::class, 'getProvinces']);
 Route::get('/regencies/{id}', [ProvinceController::class, 'getRegenciesByProvince']);
 
 Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
+
+Route::get('/user/roles', [UserController::class, 'getAllRoles']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
 
@@ -60,6 +64,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/book/returned/{uuid}', [BorrowController::class, 'returnedBook']);
     Route::get('/book/borrow/late-books', [BorrowController::class, 'getAllLateBooks']);
     Route::get('/book/borrow/returned-books', [BorrowController::class, 'getAllReturnedBooks']);
+    
+    // Route untuk membuat pesanan
+    Route::post('/orders', [OrderController::class, 'createOrder']);
+    Route::post('/pay', [TransactionController::class, 'pay']);
+    // Route untuk memperbarui pesanan dengan Midtrans token
+    Route::post('/orders/{orderId}/update', [OrderController::class, 'updateOrderWithMidtrans']);
+    // Route untuk memperbarui status pesanan
+    Route::post('/orders/{orderId}/status', [OrderController::class, 'updateOrderStatus']);
 
     /* Admin */
     // Book

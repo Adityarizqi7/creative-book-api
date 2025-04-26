@@ -14,6 +14,10 @@ class Book extends Model
 
     use HasSlug;
 
+    protected $casts = [
+        'images' => 'array',
+    ];
+
     protected static function boot()
     {
         parent::boot();
@@ -51,7 +55,7 @@ class Book extends Model
 
     public function stores()
     {
-        return $this->belongsToMany(Store::class, 'book_stores', 'uuid_book', 'uuid_store')
+        return $this->belongsToMany(Store::class, 'book_stores', 'uuid_book', 'uuid_store', 'uuid')
                     ->withPivot('original_price', 'final_price', 'uuid_promo')
                     ->withTimestamps();
     }

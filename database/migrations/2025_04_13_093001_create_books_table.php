@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->longText('description');
             $table->string('slug')->unique();
-            $table->string('image');
+            $table->json('images')->nullable();
             $table->string('variant_code');
             $table->string('variant_name');
             $table->timestamp('date_publish');

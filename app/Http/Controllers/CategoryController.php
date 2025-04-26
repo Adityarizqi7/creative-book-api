@@ -94,6 +94,7 @@ class CategoryController extends Controller
                 'message' => 'Kategori berhasil di diubah.',
                 'data' => $category->only(['uuid', 'title', 'slug', 'updated_at']),
             ], 201);
+            
         } catch (\Throwable $e) {
             Log::error('Gagal mengubah data Kategori Buku.', ['exception' => $e->getMessage()]);
 

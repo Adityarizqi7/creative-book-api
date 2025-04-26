@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Cloudinary\Cloudinary;
 use App\Http\Models\Book;
 use App\Http\Models\Promo;
 use App\Http\Models\Publisher;
@@ -51,29 +52,60 @@ class BookController extends Controller
     public function createBook(CreateBookRequest $request) {
         try {
 
+            $url = '';
+            $publicId = '';
             $finalPrice = 0;
 
-            $book = DB::transaction(function () use ($request, &$finalPrice) {
+            $book = DB::transaction(function () use ($request, &$finalPrice, &$url, &$publicId) {
 
                 $validatedData = $request->validated();
 
-                if($request->has('image')) {
-    
-                    $avatarData = $request->input('image');
-                    $image = $this->decodeBase64Image($avatarData);
-    
-                    // Menghasilkan nama file untuk gambar baru
-                    $name = str_replace(' ', '_', ucwords($validatedData['name']));
-                    $avatar_name = "{$name}.{$this->getImageExtension($avatarData)}";
-    
-                    // Menyimpan gambar base64 ke disk
-                    $avatar_path = Storage::disk('public')->put('images/books/' . $avatar_name, $image);
-    
-                    // Jika berhasil menyimpan, simpan path gambar di database
-                    if ($avatar_path) {
-                        $validatedData['image'] = 'images/books/' . $avatar_name;
-                    }
+                // Metode Penyimpanan Lokal
+                // $avatarData = $request->input('image');
+                // $image = $this->decodeBase64Image($avatarData);
+
+                // // Menghasilkan nama file untuk gambar baru
+                // $name = str_replace(' ', '_', ucwords($validatedData['name']));
+                // $avatar_name = "{$name}.{$this->getImageExtension($avatarData)}";
+
+                // // Menyimpan gambar base64 ke disk
+                // $avatar_path = Storage::disk('public')->put('images/books/' . $avatar_name, $image);
+
+                // // Jika berhasil menyimpan, simpan path gambar di database
+                // if ($avatar_path) {
+                //     $validatedData['image'] = 'images/books/' . $avatar_name;
+                // }
+
+                // Metode Penyimpanan Cloudinary
+                $files = $request->file('images'); 
+
+                $cloudinary = new Cloudinary();
+
+                if ($files) {
+                    $uploadResult = $cloudinary->uploadApi()->upload($files->getRealPath(), [
+                        'folder'          => 'creativebook/images/books/',
+                        'use_filename'    => true,
+                        'unique_filename' => false,
+                        'overwrite'       => true,
+                        'transformation'  => [
+                            [
+                                'crop'    => 'limit',
+                                'width'   => 1000,
+                                'quality' => 'auto:best',
+                            ]
+                        ],
+                    ]);
                 }
+
+                $uploadedImage = [
+                    'url'       => $uploadResult['secure_url'],
+                    'public_id' => $uploadResult['public_id'],
+                ];
+
+                $url      = $uploadResult['secure_url'];
+                $publicId = $uploadResult['public_id'];
+
+                $validatedData['images'] = $uploadedImage;
 
                 $promo = null;
                 $discount = 0;
@@ -102,7 +134,7 @@ class BookController extends Controller
                     'uuid_book' => $book_create->uuid,
                     'original_price' => $originalPrice,
                     'final_price' => $finalPrice,
-                    'uuid_promo' => $data['uuid_promo'] ?? null,
+                    'uuid_promo' => $request->uuid_promo,
                 ]);
 
                 return $book_create;
@@ -124,7 +156,11 @@ class BookController extends Controller
                         'uuid_promo' => $request->uuid_promo,
                         'original_price' => 'Rp. ' . number_format($request->original_price, 0, ',', '.'),
                         'final_price' => 'Rp. ' . number_format($finalPrice, 0, ',', '.'),
-                   ]
+                    ],
+                    'images' => [
+                        'url_images' => $url,
+                        'id_public_images' => $publicId
+                    ]
                 ],
             ], 201);
 
@@ -135,6 +171,7 @@ class BookController extends Controller
                 'code' => 500,
                 'status' => 'error',
                 'message' => 'Gagal menambah data Buku.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -142,6 +179,8 @@ class BookController extends Controller
     public function updateBook($uuid, UpdateBookRequest $request) {
         try {
 
+            $url = '';
+            $publicId = '';
             $finalPrice = 0;
 
             $book = new Book();
@@ -217,27 +256,68 @@ class BookController extends Controller
                 $book = new Book();
                 $book_detail = $book->getBookByUuid($uuid);
 
-                if($request->has('image')) {
+                // Metode Storage Local
+                // $avatarData = $request->input('image');
+                // $image = $this->decodeBase64Image($avatarData);
 
-                    $avatarData = $request->input('image');
-                    $image = $this->decodeBase64Image($avatarData);
+                // // Cek apakah image sudah ada, jika ada maka hapus gambar lama
+                // if ($book_detail->image) {
+                //     Storage::disk('public')->delete($book_detail->image);
+                // }
 
-                    // Cek apakah image sudah ada, jika ada maka hapus gambar lama
-                    if ($book_detail->image) {
-                        Storage::disk('public')->delete($book_detail->image);
+                // // Menghasilkan nama file untuk gambar baru
+                // $name = str_replace(' ', '_', ucwords($validatedData['name']));
+                // $avatar_name = "{$name}.{$this->getImageExtension($avatarData)}";
+
+                // // Menyimpan gambar base64 ke disk
+                // $avatar_path = Storage::disk('public')->put('images/books/' . $avatar_name, $image);
+
+                // // Jika berhasil menyimpan, simpan path gambar di database
+                // if ($avatar_path) {
+                //     $validatedData['image'] = 'images/books/' . $avatar_name;
+                // }
+
+                // Metode Cloudinary
+                $files = $request->file('images'); 
+
+                if ($files) {
+
+                    $cloudinary = new \Cloudinary\Cloudinary();
+            
+                    // 1. Hapus gambar lama dulu
+                    if (!empty($book->images) && isset($book->images[0]['public_id'])) {
+                        $oldPublicId = $book->images[0]['public_id'];
+            
+                        try {
+                            $cloudinary->uploadApi()->destroy($oldPublicId);
+                        } catch (\Exception $e) {
+                            Log::error('Gagal menghapus gambar lama di Cloudinary: ' . $e->getMessage());
+                        }
                     }
-
-                    // Menghasilkan nama file untuk gambar baru
-                    $name = str_replace(' ', '_', ucwords($validatedData['name']));
-                    $avatar_name = "{$name}.{$this->getImageExtension($avatarData)}";
-
-                    // Menyimpan gambar base64 ke disk
-                    $avatar_path = Storage::disk('public')->put('images/books/' . $avatar_name, $image);
-
-                    // Jika berhasil menyimpan, simpan path gambar di database
-                    if ($avatar_path) {
-                        $validatedData['image'] = 'images/books/' . $avatar_name;
-                    }
+            
+                    $uploadResult = $cloudinary->uploadApi()->upload($files->getRealPath(), [
+                        'folder'          => 'creativebook/images/books/',
+                        'use_filename'    => true,
+                        'unique_filename' => false,
+                        'overwrite'       => true,
+                        'transformation'  => [
+                            [
+                                'crop'    => 'limit',
+                                'width'   => 1000,
+                                'quality' => 'auto:best',
+                            ]
+                        ],
+                    ]);
+            
+                    // 3. Buat array baru
+                    $uploadedImage = [
+                        'url'       => $uploadResult['secure_url'],
+                        'public_id' => $uploadResult['public_id'],
+                    ];
+            
+                    $validated['images'] = $uploadedImage;
+                } else {
+                    $validated['images'] = $book->images;
                 }
 
                 $promo = null;
@@ -246,29 +326,28 @@ class BookController extends Controller
                 if ($request['uuid_promo']) {
                     $promo = Promo::where('uuid', $request['uuid_promo'])->first();
                     
-                    if ($promo) {
-                        $discount = $promo->discount;
-                    } else {
+                    if (!$promo) {
                         abort(422, 'Promo tidak ditemukan.');
                     }
-                }
-                
-                $originalPrice = $request['original_price'];
-                $finalPrice = $originalPrice;
-                
-                if ($promo) {
-                    $finalPrice = $originalPrice - ($originalPrice * ($discount / 100));
+
+                    $originalPrice = $request['original_price'];
+                    $finalPrice = $originalPrice;
+                    
+                    if ($promo && now()->between($promo->start_date_flash_sale, $promo->end_date_flash_sale)) {
+                        $discount = $promo->discount;
+                        $finalPrice = $originalPrice - ($originalPrice * ($discount / 100));
+                    } else {
+                        abort(422, 'Promo sudah tidak berlaku.');
+                    }
                 }
 
-                $book_detail->stores()->syncWithoutDetaching([
-                    $request->uuid_store => [
-                        'uuid' => (string) Str::uuid(),
-                        'uuid_book' => $uuid,
-                        'original_price' => $request->original_price,
-                        'final_price'    => $finalPrice,
-                        'uuid_promo'     => $request->uuid_promo,
-                        'updated_at'     => now(),
-                    ]
+                $book_detail->stores()->updateExistingPivot($request->uuid_store, [
+                    'uuid' => (string) Str::uuid(),
+                    'uuid_book' => $uuid,
+                    'original_price' => $request->original_price,
+                    'final_price'    => $finalPrice,
+                    'uuid_promo'     => $request->uuid_promo,
+                    'updated_at'     => now(),
                 ]);                
 
                 return $this->book_service->update($uuid, $validatedData);
@@ -291,6 +370,10 @@ class BookController extends Controller
                         ],
                         'original_price' => 'Rp. ' . number_format($request->original_price, 0, ',', '.'),
                         'final_price' => 'Rp. ' . number_format($finalPrice, 0, ',', '.'),
+                    ],
+                    'images' => [
+                        'url_images' => $url,
+                        'id_public_images' => $publicId
                     ]
                 ] 
             ], 200);
@@ -303,6 +386,7 @@ class BookController extends Controller
                 'code' => 500,
                 'status' => 'error',
                 'message' => 'Gagal mengubah data Buku.',
+                'error' => $e->getMessage()
             ], 500);;
         }
     }

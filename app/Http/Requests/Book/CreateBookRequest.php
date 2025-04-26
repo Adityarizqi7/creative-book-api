@@ -25,11 +25,7 @@ class CreateBookRequest extends FormRequest
             'name' => 'string|required|unique:books,name',
             'description' => 'string|nullable',
             'slug' => 'string|unique:books,slug',
-            'image' => [
-                'nullable',
-                'string',
-                'regex:/^data:image\/(jpg|jpeg|png);base64,/',
-            ],
+            'images' => 'mimes:png,jpg,jpeg|max:1536|image',
             'variant_code' => 'string|required',
             'variant_name' => 'string|required',
             'date_publish' => 'date|nullable',
@@ -61,9 +57,9 @@ class CreateBookRequest extends FormRequest
             'slug.string' => 'Slug harus berupa teks.',
             'slug.unique' => 'Slug sudah digunakan, silakan pilih yang lain.',
 
-            'image.image' => 'Avatar harus berupa gambar.',
-            'image.mimes' => 'Avatar harus memiliki format jpg, jpeg, atau png.',
-            'image.max' => 'Ukuran avatar maksimal 1.5MB.',
+            'images.image' => 'Cover Buku harus berupa gambar.',
+            'images.mimes' => 'Cover Buku harus memiliki format jpg, jpeg, atau png.',
+            'images.max' => 'Ukuran avatar maksimal 1.5MB.',
 
             'variant_code.required' => 'Kode Varian wajib diisi.',
             'variant_code.string' => 'Kode Varian harus berupa teks.',

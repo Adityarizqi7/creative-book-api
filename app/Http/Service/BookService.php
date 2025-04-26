@@ -10,7 +10,7 @@ class BookService {
         $book = Book::create([
             'name' => $data['name'],
             'description' => $data['description'],
-            'image' => $data['image'],
+            'images' => $data['images'],
             'variant_code' => $data['variant_code'],
             'variant_name' => $data['variant_name'],
             'date_publish' => $data['date_publish'],
@@ -58,6 +58,8 @@ class BookService {
     public function delete($uuid){
         $book_model = new Book();
         $book = $book_model->getBookByUuid($uuid);
+
+        $book->stores()->detach();
 
         $book->delete();
     }
