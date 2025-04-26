@@ -285,8 +285,8 @@ class BookController extends Controller
                     $cloudinary = new \Cloudinary\Cloudinary();
             
                     // 1. Hapus gambar lama dulu
-                    if (!empty($book->images) && isset($book->images[0]['public_id'])) {
-                        $oldPublicId = $book->images[0]['public_id'];
+                    if (!empty($book->images) && isset($book->images['public_id'])) {
+                        $oldPublicId = $book->images['public_id'];
             
                         try {
                             $cloudinary->uploadApi()->destroy($oldPublicId);
@@ -405,7 +405,14 @@ class BookController extends Controller
                 ], 404);
             }
             
-            DB::transaction(function () use ($uuid) {
+            DB::transaction(function () use ($uuid, $book_data) {
+                
+                $cloudinary = new Cloudinary();
+
+                $oldPublicId = $book_data->images['public_id'];
+                $cloudinary->uploadApi()->destroy($oldPublicId);
+
+
                 return $this->book_service->delete($uuid);
             });
 
@@ -425,21 +432,21 @@ class BookController extends Controller
         }
     }
 
-    private function decodeBase64Image($base64String) {
-        $image = str_replace('data:image/png;base64,', '', $base64String);
-        $image = str_replace('data:image/jpeg;base64,', '', $image);
-        $image = str_replace('data:image/jpg;base64,', '', $image);
-        return base64_decode($image);
-    }
+    // private function decodeBase64Image($base64String) {
+    //     $image = str_replace('data:image/png;base64,', '', $base64String);
+    //     $image = str_replace('data:image/jpeg;base64,', '', $image);
+    //     $image = str_replace('data:image/jpg;base64,', '', $image);
+    //     return base64_decode($image);
+    // }
 
-    private function getImageExtension($base64String) {
-        if (strpos($base64String, 'data:image/jpeg;base64,') === 0) {
-            return 'jpg';
-        } elseif (strpos($base64String, 'data:image/png;base64,') === 0) {
-            return 'png';
-        } elseif (strpos($base64String, 'data:image/gif;base64,') === 0) {
-            return 'gif';
-        }
-        return 'png';
-    }
+    // private function getImageExtension($base64String) {
+    //     if (strpos($base64String, 'data:image/jpeg;base64,') === 0) {
+    //         return 'jpg';
+    //     } elseif (strpos($base64String, 'data:image/png;base64,') === 0) {
+    //         return 'png';
+    //     } elseif (strpos($base64String, 'data:image/gif;base64,') === 0) {
+    //         return 'gif';
+    //     }
+    //     return 'png';
+    // }
 }
